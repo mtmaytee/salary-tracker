@@ -1,25 +1,33 @@
 package com.dev.salarytracker.service;
 
-import com.dev.salarytracker.config.SecurityConfig;
+import com.dev.salarytracker.controller.AuthController;
 import com.dev.salarytracker.dto.AuthResponse;
 import com.dev.salarytracker.dto.LoginRequest;
 import com.dev.salarytracker.dto.RegisterRequest;
 import com.dev.salarytracker.entity.Users;
 import com.dev.salarytracker.exception.CustomValidationException;
 import com.dev.salarytracker.exception.UserNotFoundException;
+import com.dev.salarytracker.exception.UserNotVerifiedException;
 import com.dev.salarytracker.repository.UsersRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AuthService {
-
     @Autowired
     private UsersRepository usersRepository;
     @Autowired
@@ -30,6 +38,25 @@ public class AuthService {
     private JwtService jwtService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    // 🌟 เพิ่มใหม่: ดึงข้อมูล User ปัจจุบันที่ Login อยู่
+    public Users getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        //System.out.println("debug at  getCurrentUser : "+username);
+        return usersRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("ไม่พบผู้ใช้งานนี้"));
+    }
+
+    // 🌟 เพิ่มใหม่: อัปเดตโปรไฟล์
+    public Users updateUserProfile(Users updatedData) {
+        Users user = getCurrentUser();
+        user.setFirstName(updatedData.getFirstName());
+        user.setLastName(updatedData.getLastName());
+        user.setPhoneNumber(updatedData.getPhoneNumber());
+        user.setEmail(updatedData.getEmail());
+        // ไม่ควรอัปเดต Password หรือ Username ผ่านเส้นทางนี้โดยตรง (ควรมี API แยกเพื่อความปลอดภัย)
+        return usersRepository.save(user);
+    }
 
     public AuthResponse authenticate(LoginRequest request, String ip) {
         try {
@@ -42,8 +69,16 @@ public class AuthService {
                 logService.saveLog(request.getUsername(), "LOGIN", "FAILED", "Invalid password attempt", ip);
                 throw new BadCredentialsException("รหัสผ่านไม่ถูกต้อง");
             }
+
+            // 🌟 3. เช็คการยืนยันตัวตน (Email Verification)
+            if (user.getActiveStatus() == null || !user.getActiveStatus()) {
+                logService.saveLog(user.getUsername(), "LOGIN", "FAILED", "User email not verified", ip);
+                throw new UserNotVerifiedException("กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ");
+            }
+
             // ✅ บันทึก Log: Login สำเร็จ
             logService.saveLog(user.getUsername(), "LOGIN", "SUCCESS", "User logged in successfully", ip);
+            log.info("Login Success for user: {} from IP: {}", user.getUsername(), ip);
 
             String token = jwtService.generateToken(user.getUsername());
             return new AuthResponse(token);
@@ -51,6 +86,7 @@ public class AuthService {
         } catch (UserNotFoundException e) {
             // ❌ บันทึก Log: ไม่พบ Username ในระบบ
             logService.saveLog(request.getUsername(), "LOGIN", "FAILED", "Username not found", ip);
+            log.warn("Login FAILED for user: {} from IP: {}", request.getUsername(), ip);
             throw e;
         }
     }

@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function; // อย่าลืม Import ตัวนี้
@@ -14,8 +15,9 @@ import java.util.function.Function; // อย่าลืม Import ตัวน
 public class JwtService {
 
     // สร้าง Key ที่มีความยาวเหมาะสมสำหรับ HS256
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
+    //private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final String SECRET_STRING = "9a4f2c3d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7A8B9C0D1E2F";
+    private final Key key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
     public String generateToken(String username){
         return Jwts.builder()
                 .setSubject(username)

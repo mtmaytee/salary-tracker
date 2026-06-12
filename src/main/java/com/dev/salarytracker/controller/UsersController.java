@@ -1,4 +1,4 @@
-package com.dev.salarytracker.cotroller;
+package com.dev.salarytracker.controller;
 
 
 import com.dev.salarytracker.dto.RegisterRequest;
@@ -29,6 +29,18 @@ public class UsersController {
     @GetMapping("/all")
     public List<Users> getAllUser(){
         return usersRepository.findAll();
+    }
+
+    // 🌟 เพิ่มใหม่: ดึงข้อมูลโปรไฟล์ของคนที่ Login อยู่
+    @GetMapping("/me")
+    public ResponseEntity<Users> getMyProfile() {
+        return ResponseEntity.ok(authService.getCurrentUser());
+    }
+
+    // 🌟 เพิ่มใหม่: แก้ไขข้อมูลส่วนตัว
+    @PutMapping("/update")
+    public ResponseEntity<Users> updateProfile(@RequestBody Users updatedData) {
+        return ResponseEntity.ok(authService.updateUserProfile(updatedData));
     }
 
     @PostMapping("/register") // แนะนำให้ใช้ path ที่สื่อสารชัดเจน

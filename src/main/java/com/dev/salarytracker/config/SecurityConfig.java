@@ -1,5 +1,6 @@
 package com.dev.salarytracker.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration //บอก Spring Boot ว่าไฟล์นี้เป็นไฟล์ตั้งค่า (Configuration) นะ ให้มาอ่านที่นี่ตอนเริ่มรันระบบ
-@EnableWebSecurity //คำสั่งเปิดใช้งานระบบความปลอดภัย (Security) ให้กับโปรเจกต์ ถ้าไม่มีคำสั่งนี้ Spring จะไม่ใช้กฎที่เราเขียน
+@Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -21,20 +22,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable()) // ปิด CSRF สำหรับ REST API
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // ปล่อยให้ Login/Register เข้าได้โดยไม่ต้องมี Token
-                        .requestMatchers("/api/users/**").authenticated() // บังคับว่า UsersController ต้อง Login ก่อน
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/users/**").authenticated()
+                        .requestMatchers("/api/companies", "/api/companies/**").authenticated()
+                        .requestMatchers("/api/income-records", "/api/income-records/**").authenticated()
+                        .requestMatchers("/api/employments", "/api/employments/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // 🌟 ส่ง 401 Unauthorized เมื่อไม่มี Token หรือ Token ผิด
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                        })
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 🔥 เพิ่มบรรทัดนี้: บอกให้ใช้ JwtFilter ก่อน Filter มาตรฐานของ Spring
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // ใช้เทคนิค BCrypt ซึ่งปลอดภัยและเป็นมาตรฐาน
+        return new BCryptPasswordEncoder();
     }
 }
