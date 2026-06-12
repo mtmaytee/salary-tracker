@@ -41,8 +41,22 @@ public class AuthService {
 
     // 🌟 เพิ่มใหม่: ดึงข้อมูล User ปัจจุบันที่ Login อยู่
     public Users getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        //System.out.println("debug at  getCurrentUser : "+username);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UsernameNotFoundException("กรุณาเข้าสู่ระบบก่อนทำรายการ");
+        }
+
+        Object principal = authentication.getPrincipal();
+        String username;
+
+        if (principal instanceof Users) {
+            return (Users) principal;
+        } else if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
         return usersRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("ไม่พบผู้ใช้งานนี้"));
     }
@@ -81,7 +95,7 @@ public class AuthService {
             log.info("Login Success for user: {} from IP: {}", user.getUsername(), ip);
 
             String token = jwtService.generateToken(user.getUsername());
-            return new AuthResponse(token);
+            return new AuthResponse(token, user.getRole());
 
         } catch (UserNotFoundException e) {
             // ❌ บันทึก Log: ไม่พบ Username ในระบบ

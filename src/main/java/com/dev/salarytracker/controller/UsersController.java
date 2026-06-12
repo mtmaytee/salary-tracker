@@ -31,14 +31,14 @@ public class UsersController {
         return usersRepository.findAll();
     }
 
-    // 🌟 เพิ่มใหม่: ดึงข้อมูลโปรไฟล์ของคนที่ Login อยู่
+    // 🌟 ดึงข้อมูลโปรไฟล์ของคนที่ Login อยู่
     @GetMapping("/me")
     public ResponseEntity<Users> getMyProfile() {
         return ResponseEntity.ok(authService.getCurrentUser());
     }
 
-    // 🌟 เพิ่มใหม่: แก้ไขข้อมูลส่วนตัว
-    @PutMapping("/update")
+    // 🌟 แก้ไขข้อมูลส่วนตัว (รองรับทั้ง /update และ /profile)
+    @PutMapping({"/update", "/profile"})
     public ResponseEntity<Users> updateProfile(@RequestBody Users updatedData) {
         return ResponseEntity.ok(authService.updateUserProfile(updatedData));
     }

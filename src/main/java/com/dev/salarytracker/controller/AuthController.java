@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.http.HttpStatus;
+import java.net.URI;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -38,7 +41,10 @@ public class AuthController {
         Users user = usersRepository.findByVerificationToken(token);
 
         if (user == null) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Link ยืนยันไม่ถูกต้อง หรือหมดอายุ"));
+            // กรณี Token ผิดพลาด ให้ Redirect กลับไปหน้า Login พร้อม Parameter แจ้ง Error
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("http://localhost:4200/login?error=invalid_token"))
+                    .build();
         }
 
         // อัปเดตสถานะเป็น active (true)
@@ -46,7 +52,10 @@ public class AuthController {
         user.setVerificationToken(null); // ลบ Token ทิ้งหลังจากใช้แล้ว
         usersRepository.save(user);
 
-        return ResponseEntity.ok(new MessageResponse("ยืนยันตัวตนสำเร็จ! คุณสามารถ Login ได้แล้ว")); // [cite: 200]
+        // ✅ ยืนยันสำเร็จ -> Redirect ไปหน้า Login ของ Frontend พร้อม Parameter
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("http://localhost:4200/login?verified=true"))
+                .build();
     }
 
     @PostMapping("/register")

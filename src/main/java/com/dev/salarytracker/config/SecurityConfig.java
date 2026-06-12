@@ -26,10 +26,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 🌟 จำกัดให้เฉพาะ Admin
                         .requestMatchers("/api/users/**").authenticated()
                         .requestMatchers("/api/companies", "/api/companies/**").authenticated()
                         .requestMatchers("/api/income-records", "/api/income-records/**").authenticated()
                         .requestMatchers("/api/employments", "/api/employments/**").authenticated()
+                        .requestMatchers("/api/reports/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

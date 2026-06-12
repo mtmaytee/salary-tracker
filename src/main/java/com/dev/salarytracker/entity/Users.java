@@ -38,6 +38,9 @@ public class Users {
     @Column(unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private String role = "ROLE_USER"; // ROLE_USER, ROLE_ADMIN
+
     private String verificationToken;
 
     @CreationTimestamp

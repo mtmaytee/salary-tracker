@@ -14,12 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -44,10 +46,12 @@ public class JwtFilter extends OncePerRequestFilter {
                             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
                     if (jwtService.isTokenValid(token, userDetails.getUsername())) {
+                        List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(userDetails.getRole()));
+                        
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails.getUsername(),
+                                userDetails, // Pass the whole object as principal
                                 null,
-                                new ArrayList<>()
+                                authorities
                         );
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
