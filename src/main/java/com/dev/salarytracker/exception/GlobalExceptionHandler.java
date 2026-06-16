@@ -1,13 +1,25 @@
 package com.dev.salarytracker.exception;
 
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.hibernate.exception.JDBCConnectionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // 🌟 เพิ่มตัวดักจับปัญหา Database Connection
+    @ExceptionHandler({JDBCConnectionException.class, DataAccessResourceFailureException.class})
+    public ResponseEntity<Map<String, String>> handleDatabaseConnectionError(Exception ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Database Connection Error");
+        response.put("message", "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ในขณะนี้ (Database อาจจะปิดอยู่) กรุณาลองใหม่ภายหลัง");
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE); // ส่ง 503 กลับไป
+    }
 
     // สั่งให้จับตัว CustomValidationException ตัวใหม่ของเรา
     @ExceptionHandler(CustomValidationException.class)
