@@ -42,4 +42,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex) {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
     }
+
+    // 🌟 ตัวสุดท้ายสำหรับดักจับ Error ที่เราไม่ได้คาดคิด (ป้องกัน 502/500 แบบไม่มีข้อมูล)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Internal Server Error");
+        response.put("message", "เกิดข้อผิดพลาดบางอย่างในระบบ: " + ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
