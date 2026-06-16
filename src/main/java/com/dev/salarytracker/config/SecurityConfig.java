@@ -2,6 +2,7 @@ package com.dev.salarytracker.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,6 +22,9 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Autowired
     private JwtFilter jwtFilter;
@@ -58,7 +62,8 @@ public class SecurityConfig {
         // 🌟 เพิ่ม URL ของ Vercel และ Localhost สำหรับพัฒนา
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
-                "https://salary-tracker-frontend-kappa.vercel.app"
+                "https://salary-tracker-frontend-kappa.vercel.app",
+                frontendUrl
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));

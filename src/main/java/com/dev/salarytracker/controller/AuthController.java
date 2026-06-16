@@ -11,6 +11,7 @@ import com.dev.salarytracker.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,9 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Autowired
     private UsersRepository usersRepository; // ดึง Repository เข้ามา
@@ -43,7 +47,7 @@ public class AuthController {
         if (user == null) {
             // กรณี Token ผิดพลาด ให้ Redirect กลับไปหน้า Login พร้อม Parameter แจ้ง Error
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("http://localhost:4200/login?error=invalid_token"))
+                    .location(URI.create(frontendUrl + "/login?error=invalid_token"))
                     .build();
         }
 
@@ -54,7 +58,7 @@ public class AuthController {
 
         // ✅ ยืนยันสำเร็จ -> Redirect ไปหน้า Login ของ Frontend พร้อม Parameter
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("http://localhost:4200/login?verified=true"))
+                .location(URI.create(frontendUrl + "/login?verified=true"))
                 .build();
     }
 
