@@ -7,7 +7,6 @@ import com.dev.salarytracker.dto.RegisterRequest;
 import com.dev.salarytracker.entity.Users;
 import com.dev.salarytracker.exception.CustomValidationException;
 import com.dev.salarytracker.exception.UserNotFoundException;
-import com.dev.salarytracker.exception.UserNotVerifiedException;
 import com.dev.salarytracker.repository.UsersRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -19,19 +18,15 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @Service
 public class AuthService {
     @Autowired
     private UsersRepository usersRepository;
-    @Autowired
-    private EmailService emailService;
     @Autowired
     private LogService logService;
     @Autowired
@@ -84,12 +79,6 @@ public class AuthService {
                 throw new BadCredentialsException("รหัสผ่านไม่ถูกต้อง");
             }
 
-            // 🌟 3. เช็คการยืนยันตัวตน (Email Verification)
-            if (user.getActiveStatus() == null || !user.getActiveStatus()) {
-                logService.saveLog(user.getUsername(), "LOGIN", "FAILED", "User email not verified", ip);
-                throw new UserNotVerifiedException("กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ");
-            }
-
             // ✅ บันทึก Log: Login สำเร็จ
             logService.saveLog(user.getUsername(), "LOGIN", "SUCCESS", "User logged in successfully", ip);
             log.info("Login Success for user: {} from IP: {}", user.getUsername(), ip);
@@ -140,21 +129,15 @@ public class AuthService {
             user.setEmail(request.getEmail());
             user.setNationalId(request.getNationalId());
             user.setPhoneNumber(request.getPhoneNumber());
-            user.setActiveStatus(false);
+            user.setActiveStatus(true);
 
             // ✅ จุดสำคัญ: ต้องเอา Password ที่รับมา ไปเข้าเครื่องย่อย (Encode) ก่อนเซฟลง DB
             String hashedPassword = passwordEncoder.encode(request.getPassword());
             user.setPassword(hashedPassword);
-            // 1. เจน Token สุ่ม (UUID)
-            String token = UUID.randomUUID().toString();
-            user.setVerificationToken(token);
-
 
             // 2. บันทึกลง Database
             Users savedUser = usersRepository.save(user);
 
-            // 3. ส่งอีเมลยืนยัน
-            emailService.sendVerificationEmail(savedUser.getEmail(), token);
             // ✅ บันทึก Log เมื่อสมัครสำเร็จ
             logService.saveLog(
                     savedUser.getUsername(),

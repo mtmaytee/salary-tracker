@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 
+@Slf4j
 @Service
 public class EmailService {
     @Autowired
@@ -20,13 +21,19 @@ public class EmailService {
 
     @Async
     public void sendVerificationEmail(String toEmail, String token) {
-        String verificationUrl = backendUrl + "/api/auth/verify/" + token;
+        try {
+            log.info("Starting to send verification email to: {}", toEmail);
+            String verificationUrl = backendUrl + "/api/auth/verify/" + token;
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("ยืนยันการสมัครสมาชิก - Salary System");
-        message.setText("กรุณาคลิกลิงก์ด้านล่างเพื่อยืนยันตัวตนและเปิดใช้งานบัญชีของคุณ:\n\n" + verificationUrl);
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject("ยืนยันการสมัครสมาชิก - Salary System");
+            message.setText("กรุณาคลิกลิงก์ด้านล่างเพื่อยืนยันตัวตนและเปิดใช้งานบัญชีของคุณ:\n\n" + verificationUrl);
 
-        mailSender.send(message);
+            mailSender.send(message);
+            log.info("Successfully sent verification email to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send verification email to: {}. Error: {}", toEmail, e.getMessage());
+        }
     }
 }

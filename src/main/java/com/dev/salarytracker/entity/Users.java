@@ -28,8 +28,8 @@ public class Users {
     private String firstName;
     private String lastName;
 
-    // กำหนดค่าเริ่มต้นให้เป็น false (0) เมื่อสร้างข้อมูลใหม่
-    private Boolean activeStatus = false;
+    // กำหนดค่าเริ่มต้นให้เป็น true เมื่อสร้างข้อมูลใหม่
+    private Boolean activeStatus = true;
 
     @Column(unique = true)
     private String username;
