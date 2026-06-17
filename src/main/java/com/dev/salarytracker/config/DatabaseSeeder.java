@@ -30,6 +30,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private TaxBracketRepository taxBracketRepository;
 
     @Autowired
+    private com.dev.salarytracker.repository.ReportRepository reportRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -38,6 +41,21 @@ public class DatabaseSeeder implements CommandLineRunner {
         seedAdminUser();
         seedTaxMasterData();
         seedTaxBrackets();
+        seedReportDefinitions();
+    }
+
+    private void seedReportDefinitions() {
+        if (reportRepository.count() == 0) {
+            log.info("Seeding default report definitions...");
+            com.dev.salarytracker.entity.ReportDefinition report = new com.dev.salarytracker.entity.ReportDefinition();
+            report.setReportCode("IncomeByCompany");
+            report.setName("รายได้แยกตามบริษัท");
+            report.setFileName("IncomeByCompany.jasper");
+            report.setCategory("INCOME");
+            report.setDescription("รายงานสรุปรายได้แยกตามบริษัท");
+            
+            reportRepository.save(report);
+        }
     }
 
     private void seedAdminUser() {
